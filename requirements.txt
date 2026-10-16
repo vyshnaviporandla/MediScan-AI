@@ -1,4 +1,5 @@
-tensorflow>=2.15,<3
+
+tensorflow==2.21.0
 numpy>=1.26,<3
 pillow>=10,<13
 matplotlib>=3.8,<4
