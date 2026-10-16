@@ -289,9 +289,9 @@ This project demonstrates practical experience with:
 **Model:** MobileNetV2  
 **Interface:** Streamlit
 
-**GitHub Repository:** Add your repository URL here.
+**GitHub Repository:** https://github.com/vyshnaviporandla/MediScan-AI
 
-**Developer Profile:** Add your GitHub profile URL here.
+**Developer Profile:**Vyshnavi Porandla**
 
 ---
 
