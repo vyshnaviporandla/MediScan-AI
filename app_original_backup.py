@@ -1,4 +1,5 @@
-"""Streamlit web interface for the educational chest X-ray classifier."""
+﻿
+"""MediScan AI — Educational chest X-ray classification interface."""
 import json
 from pathlib import Path
 
@@ -8,8 +9,12 @@ import tensorflow as tf
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent
+
+# Keep existing filenames so the current assets continue to work.
 LOGO_PATH = ROOT / "images" / "thorax_ai_logo.png"
 ICON_PATH = ROOT / "images" / "thorax_ai_icon.png"
+
+# Keep the trained model path unchanged.
 MODEL_PATH = ROOT / "models" / "pneumonia_mobilenet.keras"
 METRICS_PATH = ROOT / "outputs" / "metrics.json"
 CURVES_PATH = ROOT / "outputs" / "training_curves.png"
@@ -17,16 +22,17 @@ CONFUSION_PATH = ROOT / "outputs" / "confusion_matrix.png"
 CLASS_NAMES = ("NORMAL", "PNEUMONIA")
 
 st.set_page_config(
-    page_title="Thorax AI | Medical Imaging Lab",
+    page_title="MediScan AI | Medical Imaging",
     page_icon=str(ICON_PATH),
     layout="wide",
 )
 
 st.logo(str(LOGO_PATH), size="large", icon_image=str(ICON_PATH))
+
 st.markdown(
     """
     <style>
-    .thorax-eyebrow {
+    .mediscan-eyebrow {
         color: #73dccc;
         font-size: 0.72rem;
         font-weight: 700;
@@ -34,7 +40,7 @@ st.markdown(
         text-transform: uppercase;
         margin-bottom: 0.5rem;
     }
-    .thorax-title {
+    .mediscan-title {
         background: linear-gradient(105deg, #f2fbfa 15%, #8ce6d7 88%);
         background-clip: text;
         -webkit-background-clip: text;
@@ -45,16 +51,16 @@ st.markdown(
         line-height: 1.02;
         margin-bottom: 0.7rem;
     }
-    .thorax-subtitle {
+    .mediscan-subtitle {
         color: #a8bdc5;
         font-size: 1.02rem;
         line-height: 1.65;
         margin: 0;
         max-width: 700px;
     }
-    .thorax-eyebrow,
-    .thorax-title,
-    .thorax-subtitle {
+    .mediscan-eyebrow,
+    .mediscan-title,
+    .mediscan-subtitle {
         overflow-wrap: anywhere;
     }
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -66,13 +72,22 @@ st.markdown(
 )
 
 with st.sidebar:
-    st.caption("THORAX AI · MEDICAL IMAGING LAB")
+    st.caption("MEDISCAN AI · MEDICAL IMAGING")
     if MODEL_PATH.is_file():
-        st.badge("Model checkpoint ready", icon=":material/check_circle:", color="green")
+        st.badge(
+            "Model checkpoint ready",
+            icon=":material/check_circle:",
+            color="green",
+        )
     else:
-        st.badge("Model not trained", icon=":material/pending:", color="orange")
+        st.badge(
+            "Model unavailable",
+            icon=":material/pending:",
+            color="orange",
+        )
+
     st.markdown("### A focused research demo")
-    st.caption("MobileNetV2 · Image-classification research")
+    st.caption("MobileNetV2 · Image classification")
     st.markdown("**Research workflow**")
     st.markdown(
         ":material/upload_file: Upload an authorized image  \n"
@@ -86,26 +101,39 @@ with st.container(border=True):
         [0.12, 0.68, 0.20],
         vertical_alignment="center",
     )
+
     with icon_column:
         st.image(
             str(ICON_PATH),
             width=78,
-            alt="Thorax AI medical imaging logo",
+            alt="MediScan AI medical imaging icon",
         )
+
     with title_column:
-        st.markdown('<div class="thorax-eyebrow">THORAX AI · IMAGING LAB</div>', unsafe_allow_html=True)
-        st.markdown('<div class="thorax-title">Imaging intelligence</div>', unsafe_allow_html=True)
         st.markdown(
-            '<p class="thorax-subtitle">A considered space for exploring medical image '
-            'classification through responsible, education-first AI.</p>',
+            '<div class="mediscan-eyebrow">MEDISCAN AI · IMAGING LAB</div>',
             unsafe_allow_html=True,
         )
+        st.markdown(
+            '<div class="mediscan-title">Imaging intelligence</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<p class="mediscan-subtitle">An educational environment for '
+            'exploring medical image classification through responsible AI.</p>',
+            unsafe_allow_html=True,
+        )
+
     with badge_column:
-        st.badge("Research demo", icon=":material/science:", color="blue")
+        st.badge(
+            "Research demo",
+            icon=":material/science:",
+            color="blue",
+        )
 
 st.warning(
-    "Not a medical device. Never use outputs for diagnosis or care decisions. "
-    "Do not upload identifiable or private patient images.",
+    "This is not a medical device. Never use its outputs for diagnosis "
+    "or treatment decisions. Do not upload identifiable or private patient images.",
     title="Research and education only",
 )
 
@@ -117,8 +145,10 @@ def load_classifier(model_path: str):
 
 
 def load_metrics() -> dict:
+    """Load saved evaluation metrics when available."""
     if not METRICS_PATH.is_file():
         return {}
+
     with METRICS_PATH.open(encoding="utf-8") as metrics_file:
         return json.load(metrics_file)
 
@@ -133,74 +163,114 @@ section = st.segmented_control(
 if section == "Image demo":
     st.subheader("Image assessment", icon=":material/image_search:")
     st.caption(
-        "Add an authorized image to view a model output. Files are processed in memory "
-        "by this local app and are not saved."
+        "Upload an authorized image to view a model output. Files are processed "
+        "in memory and are not saved by this interface."
     )
+
     left, right = st.columns(
         2,
         gap="medium",
         vertical_alignment="top",
     )
+
     with left:
         with st.container(border=True, height=350):
             st.subheader("Image input", icon=":material/upload_file:")
             st.caption("JPG or PNG · resized to 224 × 224 for the model")
+
             uploaded = st.file_uploader(
                 "Choose an image",
                 type=["jpg", "jpeg", "png"],
-                help="Processed in memory by this local app. Avoid private or identifiable images.",
+                help="Processed in memory. Avoid private or identifiable images.",
             )
+
             if not MODEL_PATH.is_file():
                 st.warning(
-                    "Train the model before requesting a prediction.",
+                    "The trained model file was not found at the configured path.",
                     title="Model unavailable",
                 )
+
     with right:
         if uploaded is not None:
             try:
                 image = Image.open(uploaded).convert("RGB")
+
                 with st.container(border=True):
                     st.subheader("Review & result", icon=":material/visibility:")
+
                     preview = image.copy()
                     preview.thumbnail((640, 640))
+
                     st.image(
                         preview,
                         caption="Uploaded image preview",
-                        alt="Preview of the uploaded X-ray image",
+                        alt="Preview of uploaded image",
                         width="stretch",
                     )
 
                     if MODEL_PATH.is_file():
-                        resized = image.resize((224, 224), Image.Resampling.BILINEAR)
-                        batch = np.expand_dims(np.asarray(resized, dtype=np.float32), axis=0)
+                        resized = image.resize(
+                            (224, 224),
+                            Image.Resampling.BILINEAR,
+                        )
+                        batch = np.expand_dims(
+                            np.asarray(resized, dtype=np.float32),
+                            axis=0,
+                        )
+
                         with st.spinner("Running model inference..."):
                             model = load_classifier(str(MODEL_PATH))
-                            score = float(model.predict(batch, verbose=0)[0][0])
+                            score = float(
+                                model.predict(batch, verbose=0)[0][0]
+                            )
+
                         index = int(score >= 0.5)
+
                         st.badge(
                             f"Model prediction · {CLASS_NAMES[index]}",
                             icon=":material/analytics:",
                             color="blue",
                         )
-                        st.metric("PNEUMONIA class score", f"{score:.1%}")
+                        st.metric(
+                            "PNEUMONIA class score",
+                            f"{score:.1%}",
+                        )
                         st.progress(min(max(score, 0.0), 1.0))
                         st.caption(
-                            "Uncalibrated model score using the demonstration threshold of 0.5. "
-                            "Not a diagnosis or clinical probability."
+                            "This is an uncalibrated model score using a "
+                            "demonstration threshold of 0.5. It is not a "
+                            "diagnosis or a clinical probability."
                         )
+
             except (OSError, ValueError) as error:
-                st.error(f"Could not read that image: {error}", title="Invalid image")
+                st.error(
+                    f"Could not read that image: {error}",
+                    title="Invalid image",
+                )
+
         else:
-            with st.container(border=True, height=350, vertical_alignment="center"):
-                st.subheader("Ready for an image", icon=":material/radiology:")
+            with st.container(
+                border=True,
+                height=350,
+                vertical_alignment="center",
+            ):
+                st.subheader(
+                    "Ready for an image",
+                    icon=":material/radiology:",
+                )
                 st.caption(
-                    "Your preview and model output will appear here after you choose a file."
+                    "The preview and model output will appear here "
+                    "after you choose a file."
                 )
 
 elif section == "Model snapshot":
     st.subheader("Model performance", icon=":material/monitoring:")
-    st.caption("Held-out test snapshot · results describe this dataset and training run only")
+    st.caption(
+        "Held-out test snapshot · results describe this dataset and training run only"
+    )
+
     metrics = load_metrics()
+
     if metrics:
         with st.container(horizontal=True):
             st.metric("Accuracy", f"{metrics['accuracy']:.1%}", border=True)
@@ -214,68 +284,86 @@ elif section == "Model snapshot":
                 f"{metrics['specificity_recall_normal']:.1%}",
                 border=True,
             )
+
             auc = metrics.get("roc_auc")
-            st.metric("ROC AUC", f"{auc:.3f}" if auc is not None else "N/A", border=True)
+            st.metric(
+                "ROC AUC",
+                f"{auc:.3f}" if auc is not None else "N/A",
+                border=True,
+            )
+
         st.caption(
-            f"Recorded held-out test results at threshold {metrics.get('threshold', 0.5)}. "
-            "Performance describes this dataset and run only; it does not imply clinical utility."
+            f"Recorded held-out test results at threshold "
+            f"{metrics.get('threshold', 0.5)}. These results do not establish "
+            "clinical validity or usefulness."
         )
+
         if metrics.get("specificity_recall_normal", 1) < 0.5:
             st.warning(
-                "Normal specificity is low in this run, meaning many NORMAL examples "
+                "Normal specificity is low in this run. Many NORMAL examples "
                 "were classified as PNEUMONIA at the demonstration threshold.",
-                title="Interpret the result carefully",
+                title="Interpret results carefully",
             )
     else:
-        st.info("No evaluation metrics found yet. Run `python main.py evaluate` after training.")
+        st.info(
+            "No evaluation metrics were found. Run "
+            "`python main.py evaluate` after training."
+        )
 
     if CONFUSION_PATH.is_file():
         st.subheader("Error breakdown", icon=":material/grid_on:")
         st.caption(
-            "Read rows as the dataset labels and columns as model labels. "
-            "Diagonal cells are matches; off-diagonal cells are errors."
+            "Rows represent dataset labels; columns represent model labels. "
+            "Off-diagonal cells indicate classification errors."
         )
+
         _, matrix_column, _ = st.columns([1, 3, 1])
         with matrix_column:
             st.image(
                 str(CONFUSION_PATH),
-                caption="Held-out test split · image counts at threshold 0.5",
+                caption="Held-out test split · counts at threshold 0.5",
                 alt="Confusion matrix for NORMAL and PNEUMONIA labels",
                 width=640,
             )
+
     if CURVES_PATH.is_file():
         st.subheader("Training progress", icon=":material/show_chart:")
         st.caption(
-            "Training and validation curves show how model fit changed by epoch. "
-            "A gap between the lines can indicate a difference in fit between the splits."
+            "Training and validation curves show how model fit changed "
+            "across epochs. Validation data is separate from the held-out test set."
         )
+
         _, curves_column, _ = st.columns([1, 4, 1])
         with curves_column:
             st.image(
                 str(CURVES_PATH),
-                caption="Accuracy and loss · validation is separate from the held-out test split",
+                caption="Training curves · validation is separate from test data",
                 alt="Training and validation accuracy and loss by epoch",
                 width=960,
             )
 
 elif section == "About this project":
     st.subheader("Inside the research demo", icon=":material/biotech:")
-    st.caption("A compact transfer-learning workflow built for education and experimentation.")
+    st.caption(
+        "A transfer-learning workflow built for education and experimentation."
+    )
+
     st.markdown(
         """
         1. Images are resized to **224 × 224 RGB**.
-        2. A MobileNetV2 feature extractor with ImageNet weights feeds a binary
-           classification head.
+        2. A MobileNetV2 feature extractor with ImageNet weights feeds a
+           binary classification head.
         3. The displayed label uses a fixed score threshold of **0.5**.
-        4. The model was developed for an educational dataset exercise, not a
-           clinical workflow.
+        4. The model was developed for an educational dataset exercise,
+           not a clinical workflow.
 
-        The dataset is organized into existing `train`, `val`, and `test` splits.
-        Training and evaluation commands, dataset setup, and project limitations
-        are documented in the project README.
+        The dataset is organized into `train`, `val`, and `test` splits.
+        Training, evaluation, dataset setup, and limitations are documented
+        in the project README.
         """
     )
+
     st.info(
-        "Chest X-ray data can be sensitive. This app is intended for local educational "
-        "use; only upload images you are authorized to process."
+        "Chest X-ray data can be sensitive. This project is for local "
+        "educational use. Only upload images you are authorized to process."
     )
